@@ -13,6 +13,7 @@ from astropy.coordinates.attributes import (CoordinateAttribute,
                                             QuantityAttribute,
                                             DifferentialAttribute)
 from astropy.coordinates.transformations import AffineTransform
+from astropy.coordinates.errors import ConvertError
 
 from astropy.coordinates import ICRS
 from astropy.coordinates.builtin_frames.galactocentric import (Galactocentric,
@@ -62,6 +63,21 @@ class LocalGroupBarycentric(BaseCoordinateFrame):
 
 
 # Galactocentric to/from Local Group barycenter ----------------------->
+
+def _check_coord_repr_diff_types(c, frame_name):
+    if isinstance(c.data, r.UnitSphericalRepresentation):
+        raise ConvertError("Transforming to/from a {0} frame "
+                           "requires a 3D coordinate, e.g. (angle, angle, "
+                           "distance) or (x, y, z).".format(frame_name))
+
+    if ('s' in c.data.differentials and
+            isinstance(c.data.differentials['s'],
+                       (r.UnitSphericalDifferential,
+                        r.UnitSphericalCosLatDifferential,
+                        r.RadialDifferential))):
+        raise ConvertError("Transforming to/from a {0} frame "
+                           "requires a 3D velocity, e.g., proper motion "
+                           "components and radial velocity.".format(frame_name))
 
 
 def get_matrix_vectors(mw_cen, m31_cen, mw_mass, m31_mass, inverse=False):
